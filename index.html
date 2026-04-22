@@ -2,72 +2,80 @@
 <html lang="zh">
 <head>
     <meta charset="UTF-8">
-    <title>Action Viewer</title>
+    <title>License Control Panel</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: Arial;
             background: #0f172a;
-            color: #e2e8f0;
-            padding: 20px;
+            color: white;
+            text-align: center;
+            padding: 50px;
         }
+
+        .box {
+            display: inline-block;
+            padding: 30px;
+            border-radius: 15px;
+            min-width: 300px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
+
+        .work {
+            background: #16a34a;
+        }
+
+        .dog {
+            background: #dc2626;
+        }
+
         h1 {
-            color: #38bdf8;
-        }
-        .card {
-            background: #1e293b;
-            padding: 15px;
             margin-bottom: 10px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.3);
         }
-        pre {
-            background: #020617;
-            padding: 10px;
-            border-radius: 6px;
-            overflow-x: auto;
+
+        #msg {
+            margin-top: 10px;
+            font-size: 18px;
         }
     </style>
 </head>
 <body>
 
-<h1>📄 Action.json 内容展示</h1>
-<div id="content">加载中...</div>
+<div id="panel" class="box">
+    <h1>Loading...</h1>
+    <div id="msg"></div>
+</div>
 
 <script>
-async function loadJSON() {
+async function loadStatus() {
     try {
-        const response = await fetch('action.json');
-        const data = await response.json();
+        const res = await fetch('action.json?v=' + Date.now());
+        const data = await res.json();
 
-        const container = document.getElementById('content');
-        container.innerHTML = '';
+        const panel = document.getElementById('panel');
+        const msg = document.getElementById('msg');
 
-        // 如果是数组
-        if (Array.isArray(data)) {
-            data.forEach((item, index) => {
-                const div = document.createElement('div');
-                div.className = 'card';
-                div.innerHTML = `
-                    <h3>Item ${index + 1}</h3>
-                    <pre>${JSON.stringify(item, null, 2)}</pre>
-                `;
-                container.appendChild(div);
-            });
-        } else {
-            // 如果是对象
-            container.innerHTML = `
-                <div class="card">
-                    <pre>${JSON.stringify(data, null, 2)}</pre>
-                </div>
-            `;
+        msg.innerText = data.message || '';
+
+        if (data.status === "work") {
+            panel.className = "box work";
+            panel.innerHTML = `<h1>🟢 WORK</h1><div id="msg">${data.message || ''}</div>`;
+        } 
+        else if (data.status === "dog") {
+            panel.className = "box dog";
+            panel.innerHTML = `<h1>🔴 DOG (DISABLED)</h1><div id="msg">${data.message || ''}</div>`;
+        } 
+        else {
+            panel.className = "box";
+            panel.innerHTML = `<h1>⚠️ UNKNOWN STATUS</h1>`;
         }
 
-    } catch (err) {
-        document.getElementById('content').innerHTML = '❌ 加载失败: ' + err;
+    } catch (e) {
+        document.getElementById('panel').innerHTML = "❌ load failed";
     }
 }
 
-loadJSON();
+loadStatus();
+setInterval(loadStatus, 5000); // 每5秒刷新
 </script>
 
 </body>
